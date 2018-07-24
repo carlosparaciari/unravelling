@@ -44,6 +44,12 @@ class Unravelling:
 		self.final_time = final_time
 		self.filename = filename
 
+		# Compute the list of L_{\alpha}^{\dagger} L_{\alpha}
+		self.double_lindblad_ops = [ (L.H)*L for L in self.lindblad_ops ]
+
+		# Compute the sum of L_{\alpha}^{\dagger} L_{\alpha}
+		self.sum_lindblad_ops = sum(self.double_lindblad_ops)
+
 	# The method evolves the CQ state until final time
 	def evolution(self):
 		pass
@@ -58,7 +64,16 @@ class Unravelling:
 
 	# The method normalises the state obtained through continuous evolution
 	def _normalisation_continuous(self):
-		pass
+		
+		sandwich = self.CQstate.state.H * self.sum_lindblad_ops * self.CQstate.state
+
+		if sandwich.size != 1:
+			raise ValueError("The sandwich should return a scalar.")
+
+		sandwich = np.asscalar(sandwich)
+		normalisation = 1 - (self.delta_time/self.tau) * sandwich
+
+		return normalisation
 
 	# The method computes the probability of continuous evolution
 	def _probability_continuous(self):
