@@ -44,6 +44,9 @@ class Unravelling:
 		self.final_time = final_time
 		self.filename = filename
 
+		# Check consistency of passed operators/state
+		self._check_shapes()
+
 		# Compute the list of L_{\alpha}^{\dagger} L_{\alpha}
 		self.double_lindblad_ops = [ (L.H)*L for L in self.lindblad_ops ]
 
@@ -66,11 +69,8 @@ class Unravelling:
 	def _normalisation_continuous(self):
 		
 		sandwich = self.CQstate.state.H * self.sum_lindblad_ops * self.CQstate.state
-
-		if sandwich.size != 1:
-			raise ValueError("The sandwich should return a scalar.")
-
 		sandwich = np.asscalar(sandwich)
+
 		normalisation = 1 - (self.delta_time/self.tau) * sandwich
 
 		return normalisation
@@ -98,3 +98,38 @@ class Unravelling:
 	# The method saves the data in a file
 	def _save_to_file(self):
 		pass
+
+	# The method checks for consistent state/operators
+	def _check_shapes(self):
+
+		state_row, state_col = (self.CQstate.state).shape
+
+		if state_col != 1:
+			raise TypeError("The state is not passed as a dx1 matrix.")
+		
+		lindblad_shapes = [ L.shape for L in self.lindblad_ops ]
+		same_shape_lindblad = list_same_elements(lindblad_shapes)
+
+		if not same_shape_lindblad:
+			raise TypeError("The Lindblad operators do not have the same shape.")
+
+		lindblad_row, lindblad_col = lindblad_shapes[0]
+
+		if lindblad_row != lindblad_col:
+			raise TypeError("The Lindblad operators are not squared.")
+
+		if lindblad_col != state_row:
+			raise RuntimeError("Lindblad and state are not consistent.")
+
+# ----------------- ADDITIONAL FUNCTIONS -----------------
+
+""" The function checks whether all element in the list are equal.
+	Return True if they are, False if they are not.
+"""
+def list_same_elements(items):
+
+	target = items[0]
+	Qitems = map(lambda elem: elem == target, items)
+	same_elements = all(Qitems)
+
+	return same_elements
