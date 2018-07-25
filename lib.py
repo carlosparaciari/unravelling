@@ -1,4 +1,5 @@
 import numpy as np
+import random as rn
 
 """ The CQ state of the theory.
 	Composed by
@@ -28,11 +29,12 @@ class CQState:
 	- tau : the rate of jumping
 	- delta_time : the unit time of evolution
 	- final_time : final time of the evolution
+	- random_seed : the seed for the random number generator
 	- filename : the name of the file where we save the data
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, tau, delta_time, final_time, filename):
+	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, tau, delta_time, final_time, random_seed, filename):
 		
 		self.CQstate = CQstate
 		self.lindblad_ops = lindblad_ops
@@ -44,8 +46,15 @@ class Unravelling:
 		self.final_time = final_time
 		self.filename = filename
 
+		# Initialise randomness
+		rn.seed(random_seed)					# CAREFULL if parallelise!
+		self.random_list = []
+
 		# Check consistency of passed operators/state
 		self._check_shapes()
+
+		# Number of Lindblad operators
+		self.number_lindblad = len(self.lindblad_ops)
 
 		# Compute the list of L_{\alpha}^{\dagger} L_{\alpha}
 		self.double_lindblad_ops = [ (L.H)*L for L in self.lindblad_ops ]
@@ -61,9 +70,40 @@ class Unravelling:
 	def _evolution_one_step(self):
 		pass
 	
-	# The method chooses the evolution (continuous or jump, which jump)
+	""" The method chooses the evolution (continuous or jump? which jump?)
+		It returns the evolution and the normalisation
+
+		- evo_type : number ( -1 for continuous, [0, N-1] for jump )
+		- norm : the normalisation
+	"""
 	def _chose_evolution(self):
-		pass
+
+		prob_cont = self._normalisation_continuous()
+
+		random_outcome = rn.random()
+		self.random_list.append(random_outcome)						# Save outcome to check if good randomness
+
+		# If the outcome is less than the prob_cont, we evolve continuously
+		if random_outcome < prob_cont:
+			evo_type = -1
+			norm = prob_cont
+			return evo_type, norm
+		
+		# Otherwise we jump!
+		prob_jumps = [ self._normalisation_jump(alpha) for alpha in range(self.number_lindblad) ]
+		cumulative_prob_jumps = np.cumsum(prob_jumps)
+		enumerate_prob_jumps = enumerate(cumulative_prob_jumps)
+		tot_prob_jumps = cumulative_prob_jumps[-1]
+
+		random_outcome = random.uniform(0, tot_prob_jumps)
+		self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
+
+		alpha = next(x[0] for x in enumerate_prob_jumps if x[1] > random_outcome)
+
+		evo_type = alpha
+		norm = (self.delta_time/self.tau) * prob_jumps[alpha]
+		
+		return evo_type, norm
 
 	# The method normalises the state obtained through continuous evolution
 	def _normalisation_continuous(self):
@@ -75,17 +115,13 @@ class Unravelling:
 
 		return normalisation
 
-	# The method computes the probability of continuous evolution
-	def _probability_continuous(self):
-		pass
-
 	# The method normalises the state obtained through jump evolution
 	def _normalisation_jump(self, alpha):
-		pass
+		
+		normalisation = self.CQstate.state.H * self.double_lindblad_ops[alpha] * self.CQstate.state
+		normalisation = np.asscalar(normalisation)
 
-	# The method computes the probability of jump evolution
-	def _probability_jump(self, alpha):
-		pass
+		return normalisation
 
 	# The method stores the randomness in a list (to check good randomness was used)
 	def _record_randomness(self):

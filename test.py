@@ -59,7 +59,7 @@ def test_state_wrong():
 	L1 = np.matrix([[0.,0.],[2.,0.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0, 0)
 
 # Test lindblad ops with different shape raise exception
 def test_different_shape():
@@ -70,7 +70,7 @@ def test_different_shape():
 	L1 = np.matrix([[0.,0.,0.],[2.,0.,1.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0, 0)
 
 # Test non squared lindblad ops raise exception
 def test_non_squared():
@@ -81,7 +81,7 @@ def test_non_squared():
 	L1 = np.matrix([[0.,0.,0.],[2.,0.,1.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0, 0)
 
 # Test inconsistent state/operators raise exception
 def test_inconsistent_state_ops():
@@ -92,7 +92,7 @@ def test_inconsistent_state_ops():
 	L1 = np.matrix([[0.,0.],[0.,1.]])
 
 	with assert_raises(RuntimeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0, 0)
 
 # ---------------------------------- LINDBLAD OPERATORS ----------------------------------
 
@@ -104,7 +104,7 @@ def test_sum_lindblad():
 	L0 = np.matrix([[0.,1.],[0.,0.]])
 	L1 = np.matrix([[0.,0.],[1j,0.]])
 
-	test_lindblad = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0)
+	test_lindblad = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, 0, 0, 0, 0, 0)
 
 	obt1 = test_lindblad.double_lindblad_ops[0]
 	obt2 = test_lindblad.double_lindblad_ops[1]
@@ -118,9 +118,9 @@ def test_sum_lindblad():
 	np.testing.assert_allclose( np.asarray(obt2), np.asarray(exp2) )
 	np.testing.assert_allclose( np.asarray(obt3), np.asarray(exp3) )
 
-# ---------------------------------- CONTINUOUS EVOLUTION ----------------------------------
+# ---------------------------------- NORMALISATION ----------------------------------
 
-# Test normalisation correct
+# Test continuous normalisation correct
 def test_normalisation_continuous():
 
 	CQstate = lib.CQState(np.matrix([[1/sqrt(2)],[1j/sqrt(2)]]),0,0)
@@ -128,12 +128,31 @@ def test_normalisation_continuous():
 	delta_time = 4.
 	tau = 3.
 
-	test_norm = lib.Unravelling(CQstate, [L], 0, 0, 0, tau, delta_time, 0, 0)
+	test_norm = lib.Unravelling(CQstate, [L], 0, 0, 0, tau, delta_time, 0, 0, 0)
 
 	obt_norm = test_norm._normalisation_continuous()
 	exp_norm = 1./3.
 
 	np.testing.assert_almost_equal(obt_norm,exp_norm)
+
+# Test jump normalisation correct
+def test_normalisation_jump():
+
+	CQstate = lib.CQState(np.matrix([[1/sqrt(3)],[1j*sqrt(2)/sqrt(3)]]),0,0)
+	L0 = np.matrix([[0.,1.],[0.,0.]])
+	L1 = np.matrix([[1j,0.],[0.,0.]])
+	delta_time = 4.
+	tau = 3.
+
+	test_norm = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, 0, 0)
+
+	obt_norm1 = test_norm._normalisation_jump(0)
+	exp_norm1 = 2./3.
+	obt_norm2 = test_norm._normalisation_jump(1)
+	exp_norm2 = 1./3.
+
+	np.testing.assert_almost_equal(obt_norm1,exp_norm1)
+	np.testing.assert_almost_equal(obt_norm2,exp_norm2)
 
 # ---------------------------------- SAME ELEMENT LIST ----------------------------------
 
