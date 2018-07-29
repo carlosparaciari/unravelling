@@ -40,7 +40,7 @@ class Unravelling:
 		self.lindblad_ops = lindblad_ops
 		self.pos_derivs = pos_derivs
 		self.mom_derivs = mom_derivs
-		self.Qhamiltonian = Qhamiltonian		# This is a function
+		self.Qhamiltonian = Qhamiltonian		# This is a function (in q and p)
 		self.tau = tau
 		self.delta_time = delta_time
 		self.final_time = final_time
@@ -49,6 +49,9 @@ class Unravelling:
 		# Initialise randomness
 		rn.seed(random_seed)					# CAREFULL if parallelise!
 		self.random_list = []
+
+		# Initialise trajectory record
+		self.trajectory = [CQstate]
 
 		# Check consistency of passed operators/state
 		self._check_shapes()
@@ -68,8 +71,28 @@ class Unravelling:
 
 	# The method evolves the state by one time step delta_time
 	def _evolution_one_step(self):
-		pass
-	
+		
+		evo_type, norm = self._choose_evolution()
+
+		if evo_type == -1:		# Continuous evolution
+			Qham_matrix = self.Qhamiltonian( self.CQstate.position , self.CQstate.position )
+
+			difference_state = ( self.delta_time/(2 * self.tau) * self.sum_lindblad_ops + 1j * self.delta_time * Qham_matrix ) * self.CQstate.state
+			unnorm_state = self.CQstate.state - difference_state
+			self.CQstate.state = unnorm_state/sqrt(norm)
+		else:					# Jump evolution
+			L = self.lindblad_ops[evo_type]
+			dhdp = self.mom_derivs[evo_type]
+			dhdq = self.pos_derivs[evo_type]
+
+			self.CQstate.state = ( L * self.CQstate.state)/sqrt(norm)
+			self.CQstate.position += dhdp * self.tau
+			self.CQstate.momentum -= dhdq * self.tau
+
+		self.CQstate.time += self.delta_time
+
+		self.trajectory.append(self.CQstate)	# Save new point in trajectory evolution
+
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
 
@@ -122,14 +145,6 @@ class Unravelling:
 		normalisation = np.asscalar(normalisation)
 
 		return normalisation
-
-	# The method stores the randomness in a list (to check good randomness was used)
-	def _record_randomness(self):
-		pass
-
-	# The method stores the trajectory in a list
-	def _record_trajectory(self):
-		pass
 
 	# The method saves the data in a file
 	def _save_to_file(self):
