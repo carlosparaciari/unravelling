@@ -118,25 +118,25 @@ def test_sum_lindblad():
 	np.testing.assert_allclose( np.asarray(obt2), np.asarray(exp2) )
 	np.testing.assert_allclose( np.asarray(obt3), np.asarray(exp3) )
 
-# ---------------------------------- NORMALISATION ----------------------------------
+# ---------------------------------- PROBABILITIES ----------------------------------
 
-# Test continuous normalisation correct
-def test_normalisation_continuous():
+# Test continuous probability correct
+def test_probability_continuous():
 
 	CQstate = lib.CQState(np.matrix([[1/sqrt(2)],[1j/sqrt(2)]]),0,0)
 	L = np.matrix([[0.,1.],[0.,0.]])
 	delta_time = 4.
 	tau = 3.
 
-	test_norm = lib.Unravelling(CQstate, [L], 0, 0, 0, tau, delta_time, 0, 0, 0)
+	test_prob = lib.Unravelling(CQstate, [L], 0, 0, 0, tau, delta_time, 0, 0, 0)
 
-	obt_norm = test_norm._normalisation_continuous()
-	exp_norm = 1./3.
+	obt_prob = test_prob._probability_continuous()
+	exp_prob = 1./3.
 
-	np.testing.assert_almost_equal(obt_norm,exp_norm)
+	np.testing.assert_almost_equal(obt_prob,exp_prob)
 
-# Test jump normalisation correct
-def test_normalisation_jump():
+# Test jump probability correct
+def test_probability_jump():
 
 	CQstate = lib.CQState(np.matrix([[1/sqrt(3)],[1j*sqrt(2)/sqrt(3)]]),0,0)
 	L0 = np.matrix([[0.,1.],[0.,0.]])
@@ -144,15 +144,89 @@ def test_normalisation_jump():
 	delta_time = 4.
 	tau = 3.
 
-	test_norm = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, 0, 0)
+	test_prob = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, 0, 0)
 
-	obt_norm1 = test_norm._normalisation_jump(0)
-	exp_norm1 = 2./3.
-	obt_norm2 = test_norm._normalisation_jump(1)
-	exp_norm2 = 1./3.
+	obt_prob1 = test_prob._probability_jump(0)
+	exp_prob1 = 2./3.
+	obt_prob2 = test_prob._probability_jump(1)
+	exp_prob2 = 1./3.
 
-	np.testing.assert_almost_equal(obt_norm1,exp_norm1)
-	np.testing.assert_almost_equal(obt_norm2,exp_norm2)
+	np.testing.assert_almost_equal(obt_prob1,exp_prob1)
+	np.testing.assert_almost_equal(obt_prob2,exp_prob2)
+
+# ---------------------------------- CHOOSE EVOLUTION ----------------------------------
+
+# Test choice continuous evolution is correct
+def test_choose_evo_continuous():
+
+	CQstate = lib.CQState(np.matrix([[1./sqrt(2)],[1./sqrt(2)]]),0,0)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 1.
+	tau = 2.
+	seed = 1
+
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, seed, 0)
+	obt_type, obt_norm = test_evo._choose_evolution()
+	obt_randomness = test_evo.random_list[0]
+
+	exp_type = -1
+	exp_norm = 0.5
+	exp_randomness = 0.13436424411240122
+
+	assert_equal( obt_type, exp_type, "Different type returned." )
+	np.testing.assert_almost_equal( obt_norm, exp_norm )
+	np.testing.assert_almost_equal( obt_randomness, exp_randomness )
+
+# Test choice first jump L0 is correct
+def test_choose_evo_jump_0():
+
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1./sqrt(3)]]),0,0)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 1.
+	tau = 2.
+	seed = 10
+
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, seed, 0)
+	obt_type, obt_norm = test_evo._choose_evolution()
+	obt_randomness_first = test_evo.random_list[0]
+	obt_randomness_second = test_evo.random_list[1]
+
+	exp_type = 0
+	exp_norm = 2./3.
+	exp_randomness_first = 0.5714025946899135
+	exp_randomness_second = 0.4288890546751146
+
+	assert_equal( obt_type, exp_type, "Different type returned." )
+	np.testing.assert_almost_equal( obt_norm, exp_norm )
+	np.testing.assert_almost_equal( obt_randomness_first, exp_randomness_first )
+	np.testing.assert_almost_equal( obt_randomness_second, exp_randomness_second )
+
+# Test choice first jump L1 is correct
+def test_choose_evo_jump_1():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1./sqrt(3)]]),0,0)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 1.
+	tau = 2.
+	seed = 2
+
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, 0, tau, delta_time, 0, seed, 0)
+	obt_type, obt_norm = test_evo._choose_evolution()
+	obt_randomness_first = test_evo.random_list[0]
+	obt_randomness_second = test_evo.random_list[1]
+
+	exp_type = 1
+	exp_norm = 1./3.
+	exp_randomness_first = 0.9560342718892494
+	exp_randomness_second = 0.9478274870593494
+
+	assert_equal( obt_type, exp_type, "Different type returned." )
+	np.testing.assert_almost_equal( obt_norm, exp_norm )
+	np.testing.assert_almost_equal( obt_randomness_first, exp_randomness_first )
+	np.testing.assert_almost_equal( obt_randomness_second, exp_randomness_second )
 
 # ---------------------------------- SAME ELEMENT LIST ----------------------------------
 

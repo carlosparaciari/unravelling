@@ -76,9 +76,9 @@ class Unravelling:
 		- evo_type : number ( -1 for continuous, [0, N-1] for jump )
 		- norm : the normalisation
 	"""
-	def _chose_evolution(self):
+	def _choose_evolution(self):
 
-		prob_cont = self._normalisation_continuous()
+		prob_cont = self._probability_continuous()
 
 		random_outcome = rn.random()
 		self.random_list.append(random_outcome)						# Save outcome to check if good randomness
@@ -90,23 +90,23 @@ class Unravelling:
 			return evo_type, norm
 		
 		# Otherwise we jump!
-		prob_jumps = [ self._normalisation_jump(alpha) for alpha in range(self.number_lindblad) ]
+		prob_jumps = [ self._probability_jump(alpha) for alpha in range(self.number_lindblad) ]
 		cumulative_prob_jumps = np.cumsum(prob_jumps)
 		enumerate_prob_jumps = enumerate(cumulative_prob_jumps)
 		tot_prob_jumps = cumulative_prob_jumps[-1]
 
-		random_outcome = random.uniform(0, tot_prob_jumps)
+		random_outcome = rn.uniform(0, tot_prob_jumps)
 		self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
 
 		alpha = next(x[0] for x in enumerate_prob_jumps if x[1] > random_outcome)
 
 		evo_type = alpha
-		norm = (self.delta_time/self.tau) * prob_jumps[alpha]
+		norm = prob_jumps[alpha]
 		
 		return evo_type, norm
 
 	# The method normalises the state obtained through continuous evolution
-	def _normalisation_continuous(self):
+	def _probability_continuous(self):
 		
 		sandwich = self.CQstate.state.H * self.sum_lindblad_ops * self.CQstate.state
 		sandwich = np.asscalar(sandwich)
@@ -116,7 +116,7 @@ class Unravelling:
 		return normalisation
 
 	# The method normalises the state obtained through jump evolution
-	def _normalisation_jump(self, alpha):
+	def _probability_jump(self, alpha):
 		
 		normalisation = self.CQstate.state.H * self.double_lindblad_ops[alpha] * self.CQstate.state
 		normalisation = np.asscalar(normalisation)
