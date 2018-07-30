@@ -339,8 +339,74 @@ def test_cont_evo_complete():
 
 	exp_state = np.matrix([[(sqrt(3)/sqrt(2) + 1./sqrt(3)) / 2.]
 						  ,[1j * (sqrt(3)/4. - 1/sqrt(6)) ]])
-	exp_position = 1/4.
+	exp_position = 1./4.
 	exp_momentum = 0
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
+# ----------------------------------- JUMPING EVOLUTION ---------------------------------
+
+# Test correct jump L0
+def test_jump_evo_L0():
+
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,2./3.)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 2.
+	tau = 4.
+
+	pos_derivs = [- 1./3., 1./6.]
+	mom_derivs = [1./8., - 1./4.]
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(0, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = np.matrix([[0.],[sqrt(2)/sqrt(3)]])
+	exp_position = 3./4.
+	exp_momentum = 2.
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
+# Test correct jump L1
+def test_jump_evo_L1():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,2./3.)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 2.
+	tau = 4.
+
+	pos_derivs = [- 1./3., 1./6.]
+	mom_derivs = [1./8., - 1./4.]
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(1, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = np.matrix([[1j*1./sqrt(3)],[0.]])
+	exp_position = - 3./4.
+	exp_momentum = 0.
 	exp_time = 2.
 
 	np.testing.assert_almost_equal( obt_state, exp_state )
