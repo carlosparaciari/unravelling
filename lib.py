@@ -1,6 +1,7 @@
 import numpy as np
 import random as rn
 from math import sqrt
+from copy import copy
 
 """ The CQ state of the theory.
 	Composed by
@@ -17,6 +18,11 @@ class CQState:
 		self.position = position
 		self.momentum = momentum
 		self.time = 0
+
+	def __str__(self):
+
+		string = str(self.state.tolist()) + ' , ' + str(self.position) + ' , ' + str(self.momentum) + ' , ' + str(self.time)
+		return string
 
 """ The algorithm for the unravelled CQ dynamics.
 
@@ -39,20 +45,21 @@ class Unravelling:
 		
 		self.CQstate = CQstate
 		self.lindblad_ops = lindblad_ops
-		self.pos_derivs = pos_derivs
+		self.pos_derivs = pos_derivs			# NOTE : These might be functions in p and q! To be improved!
 		self.mom_derivs = mom_derivs
 		self.Qhamiltonian = Qhamiltonian		# This is a function (in q and p)
 		self.tau = tau
 		self.delta_time = delta_time
 		self.final_time = final_time
 		self.filename = filename
+		self.random_seed = random_seed
 
 		# Initialise randomness
 		rn.seed(random_seed)					# CAREFULL if parallelise!
 		self.random_list = []
 
 		# Initialise trajectory record
-		self.trajectory = [CQstate]
+		self.trajectory = [ copy( self.CQstate ) ]
 
 		# Check consistency of passed operators/state
 		self._check_shapes()
@@ -68,7 +75,13 @@ class Unravelling:
 
 	# The method evolves the CQ state until final time
 	def evolution(self):
-		pass
+		
+		while self.CQstate.time < self.final_time:
+
+			evo_type, norm = self._choose_evolution()
+			self._evolution_one_step(evo_type, norm)
+
+		self._save_to_file()
 
 	""" The method evolves the state by one time step delta_time
 		Take as input
@@ -83,7 +96,7 @@ class Unravelling:
 
 			difference_state = self.delta_time * ( 1./(2 * self.tau) * self.sum_lindblad_ops + 1j * Qham_matrix ) * self.CQstate.state
 			unnorm_state = self.CQstate.state - difference_state
-			self.CQstate.state = unnorm_state/sqrt(norm)			# Here we are introducing an error prop to delta_time (due to normalisation)
+			self.CQstate.state = unnorm_state/sqrt(norm)		# Here we are introducing an error prop to delta_time (due to normalisation)
 		else:													# Jump evolution
 			L = self.lindblad_ops[evo_type]
 			dhdp = self.mom_derivs[evo_type]
@@ -95,7 +108,7 @@ class Unravelling:
 
 		self.CQstate.time += self.delta_time
 
-		self.trajectory.append(self.CQstate)	# Save new point in trajectory evolution
+		self.trajectory.append( copy( self.CQstate ) )				# Save new point in trajectory evolution
 
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
@@ -138,21 +151,50 @@ class Unravelling:
 		sandwich = self.CQstate.state.H * self.sum_lindblad_ops * self.CQstate.state
 		sandwich = np.asscalar(sandwich)
 
-		normalisation = 1 - (self.delta_time/self.tau) * sandwich
+		probability = 1 - (self.delta_time/self.tau) * sandwich
 
-		return normalisation
+		return np.real(probability)
 
 	# The method normalises the state obtained through jump evolution
 	def _probability_jump(self, alpha):
 		
-		normalisation = self.CQstate.state.H * self.double_lindblad_ops[alpha] * self.CQstate.state
-		normalisation = np.asscalar(normalisation)
+		probability = self.CQstate.state.H * self.double_lindblad_ops[alpha] * self.CQstate.state
+		probability = np.asscalar(probability)
 
-		return normalisation
+		return np.real(probability)
 
 	# The method saves the data in a file
 	def _save_to_file(self):
-		pass
+
+		# Prepare the incipit of the file
+		incipit = 'Lindblad operators = '
+
+		for L in self.lindblad_ops:
+			incipit += str(L.tolist()) + ' ; '
+
+		incipit += 'dh/dq = ' + str(self.pos_derivs) + ' ; '
+		incipit += 'dh/dp = ' + str(self.mom_derivs) + ' ; '
+		
+		incipit += ('Jump rate = {tau} ; '
+					'Time unit = {del_time} ; '
+					'Final_time = {fin_time} ; '
+					'Random seed = {seed}\n\n').format(tau=self.tau,
+												   	   del_time=self.delta_time,
+												   	   fin_time=self.final_time,
+												   	   seed=self.random_seed)
+
+		# Prepare the trajectory file
+		trajectory_record = 'Trajectory record\nSTATE , POSITION , MOMENTUM , TIME\n'
+
+		for CQ_state in self.trajectory:
+			trajectory_record += str(CQ_state) + '\n'
+
+		# Merge incipit and trajectory
+		text = incipit + trajectory_record
+
+		# Write on file
+		with open(self.filename, 'w') as output:
+			output.write(text)
 
 	# The method checks for consistent state/operators
 	def _check_shapes(self):
