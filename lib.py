@@ -68,9 +68,6 @@ class Unravelling:
 
 	# The method evolves the CQ state until final time
 	def evolution(self):
-
-		evo_type, norm = self._choose_evolution()
-
 		pass
 
 	""" The method evolves the state by one time step delta_time
@@ -178,6 +175,21 @@ class Unravelling:
 
 		if lindblad_col != state_row:
 			raise RuntimeError("Lindblad and state are not consistent.")
+
+		Qham = self.Qhamiltonian(1,1)
+
+		ham_row, ham_col = Qham.shape
+
+		if ham_row != ham_col:
+			raise TypeError("The interaction Hamiltonian is not squared.")
+
+		if ham_col != state_row:
+			raise RuntimeError("Interaction Hamiltonian and state are not consistent.")
+
+		Qham_is_self_adjoint = np.all( Qham == Qham.H )
+
+		if not Qham_is_self_adjoint:
+			raise TypeError("Interaction Hamiltonian is not self-adjoint.")
 
 # ----------------- ADDITIONAL FUNCTIONS -----------------
 
