@@ -1,5 +1,6 @@
 import numpy as np
 import random as rn
+from math import sqrt
 
 """ The CQ state of the theory.
 	Composed by
@@ -67,20 +68,26 @@ class Unravelling:
 
 	# The method evolves the CQ state until final time
 	def evolution(self):
-		pass
 
-	# The method evolves the state by one time step delta_time
-	def _evolution_one_step(self):
-		
 		evo_type, norm = self._choose_evolution()
 
-		if evo_type == -1:		# Continuous evolution
+		pass
+
+	""" The method evolves the state by one time step delta_time
+		Take as input
+
+		- evo_type : the type of evolution (continuous or jump)
+		- norm : the norm of the state
+	"""
+	def _evolution_one_step(self, evo_type, norm):
+
+		if evo_type == -1:										# Continuous evolution
 			Qham_matrix = self.Qhamiltonian( self.CQstate.position , self.CQstate.position )
 
-			difference_state = ( self.delta_time/(2 * self.tau) * self.sum_lindblad_ops + 1j * self.delta_time * Qham_matrix ) * self.CQstate.state
+			difference_state = self.delta_time * ( 1./(2 * self.tau) * self.sum_lindblad_ops + 1j * Qham_matrix ) * self.CQstate.state
 			unnorm_state = self.CQstate.state - difference_state
-			self.CQstate.state = unnorm_state/sqrt(norm)
-		else:					# Jump evolution
+			self.CQstate.state = unnorm_state/sqrt(norm)			# Here we are introducing an error prop to delta_time (due to normalisation)
+		else:													# Jump evolution
 			L = self.lindblad_ops[evo_type]
 			dhdp = self.mom_derivs[evo_type]
 			dhdq = self.pos_derivs[evo_type]

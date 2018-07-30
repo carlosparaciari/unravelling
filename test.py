@@ -228,6 +228,126 @@ def test_choose_evo_jump_1():
 	np.testing.assert_almost_equal( obt_randomness_first, exp_randomness_first )
 	np.testing.assert_almost_equal( obt_randomness_second, exp_randomness_second )
 
+# --------------------------------- CONTINUOUS EVOLUTION --------------------------------
+
+# Test continuous evolution with only diagonal Hamiltonian
+def test_cont_evo_diagonal_Hamiltonian_only():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,0)
+	L0 = np.matrix([[0.,0.],[0.,0.]])		# set L0 to be zero everywhere so we can check contribution of H only
+	delta_time = 2.
+	tau = 8.
+
+	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(-1, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = np.matrix([[sqrt(2)/sqrt(3) - 1j * 1./sqrt(6)]
+						  ,[-1./sqrt(12) + 1j*1./sqrt(3)]])
+	exp_position = 1./4.
+	exp_momentum = 0
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
+# Test continuous evolution with only non-diagonal Hamiltonian
+def test_cont_evo_non_diagonal_Hamiltonian_only():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./2.,0)
+	L0 = np.matrix([[0.,0.],[0.,0.]])		# set L0 to be zero everywhere so we can check contribution of H only
+	delta_time = 2.
+	tau = 8.
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(-1, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = np.matrix([[(1. + sqrt(2))/sqrt(3)]
+						  ,[1j * (1. - sqrt(2))/sqrt(3)]])
+	exp_position = 1./2.
+	exp_momentum = 0
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
+# Test continuous evolution with only Lindblad operators
+def test_cont_evo_Lindblad_only():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),0,0)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 2.
+	tau = 8.
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(-1, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = 7./8. * np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]])
+	exp_position = 0
+	exp_momentum = 0
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
+
+# Test continuous evolution complete
+def test_cont_evo_complete():
+	
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,0)
+	L0 = np.matrix([[0.,0.],[1.,0.]])
+	L1 = np.matrix([[0.,1.],[0.,0.]])
+	delta_time = 2.
+	tau = 4.
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(-1, 1.)
+
+	obt_state = test_cont.CQstate.state
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+	obt_time = test_cont.CQstate.time
+
+	exp_state = np.matrix([[(sqrt(3)/sqrt(2) + 1./sqrt(3)) / 2.]
+						  ,[1j * (sqrt(3)/4. - 1/sqrt(6)) ]])
+	exp_position = 1/4.
+	exp_momentum = 0
+	exp_time = 2.
+
+	np.testing.assert_almost_equal( obt_state, exp_state )
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
+	np.testing.assert_almost_equal( obt_time, exp_time )
+
 # ---------------------------------- SAME ELEMENT LIST ----------------------------------
 
 # Test return False with different elements and True with same
