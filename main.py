@@ -44,12 +44,14 @@ final_time = 10.
 seed = 365
 rn.seed(seed)
 
+# Number of iterations
+iterations = int(1e3)
+
+for iteration in range(iterations):
 # Filename for output
-filename = "./output/output.dat"
+	filename = './output/output{0}.dat'.format( str(iteration) )
 
-# Create unravelling and evolve
-stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, final_time, seed, filename)
-stern_gerlach.evolution()
-del stern_gerlach
-
-print( str(CQstate) )
+	# Create unravelling and evolve
+	stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, final_time, seed, filename)
+	stern_gerlach.evolution()
+	del stern_gerlach
