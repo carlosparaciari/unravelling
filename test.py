@@ -2,6 +2,7 @@ import lib
 from math import sqrt
 import numpy as np
 from nose.tools import assert_raises, assert_equal
+import random as rn
 
 # ---------------------------------- LINEAR ALGEBRA ----------------------------------
 
@@ -218,6 +219,7 @@ def test_choose_evo_continuous():
 	delta_time = 1.
 	tau = 2.
 	seed = 1
+	rn.seed(seed)
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
@@ -242,6 +244,7 @@ def test_choose_evo_jump_0():
 	delta_time = 1.
 	tau = 2.
 	seed = 10
+	rn.seed(seed)
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
@@ -269,6 +272,7 @@ def test_choose_evo_jump_1():
 	delta_time = 1.
 	tau = 2.
 	seed = 2
+	rn.seed(seed)
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 

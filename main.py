@@ -1,6 +1,8 @@
 import lib
 import numpy as np
+import random as rn
 from math import sqrt
+from copy import copy
 
 """ The initial CQ state is:
 	- state : \ket{+}, eigenstate of Pauli X with eigenvalue 1
@@ -40,10 +42,14 @@ final_time = 10.
 
 # Random seed
 seed = 365
+rn.seed(seed)
 
 # Filename for output
-filename = "output.dat"
+filename = "./output/output.dat"
 
 # Create unravelling and evolve
-stern_gerlach = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, final_time, seed, filename)
+stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, final_time, seed, filename)
 stern_gerlach.evolution()
+del stern_gerlach
+
+print( str(CQstate) )

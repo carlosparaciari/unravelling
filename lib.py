@@ -1,7 +1,6 @@
 import numpy as np
 import random as rn
 from math import sqrt
-from copy import copy
 
 """ The CQ state of the theory.
 	Composed by
@@ -52,14 +51,13 @@ class Unravelling:
 		self.delta_time = delta_time
 		self.final_time = final_time
 		self.filename = filename
-		self.random_seed = random_seed
+		self.random_seed = random_seed			# Pass this as information but nothing else (do the seeding before creating instance of Unravelling)
 
 		# Initialise randomness
-		rn.seed(random_seed)					# CAREFULL if parallelise!
 		self.random_list = []
 
 		# Initialise trajectory record
-		self.trajectory = [ copy( self.CQstate ) ]
+		self.trajectory = [ str( self.CQstate ) ]
 
 		# Check consistency of passed operators/state
 		self._check_shapes()
@@ -108,7 +106,7 @@ class Unravelling:
 
 		self.CQstate.time += self.delta_time
 
-		self.trajectory.append( copy( self.CQstate ) )				# Save new point in trajectory evolution
+		self.trajectory.append( str( self.CQstate ) )				# Save new point in trajectory evolution
 
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
@@ -121,7 +119,7 @@ class Unravelling:
 		prob_cont = self._probability_continuous()
 
 		random_outcome = rn.random()
-		self.random_list.append(random_outcome)						# Save outcome to check if good randomness
+		#self.random_list.append(random_outcome)						# Save outcome to check if good randomness
 
 		# If the outcome is less than the prob_cont, we evolve continuously
 		if random_outcome < prob_cont:
@@ -136,7 +134,7 @@ class Unravelling:
 		tot_prob_jumps = cumulative_prob_jumps[-1]
 
 		random_outcome = rn.uniform(0, tot_prob_jumps)
-		self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
+		#self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
 
 		alpha = next(x[0] for x in enumerate_prob_jumps if x[1] > random_outcome)
 
@@ -185,9 +183,7 @@ class Unravelling:
 
 		# Prepare the trajectory file
 		trajectory_record = 'Trajectory record\nSTATE , POSITION , MOMENTUM , TIME\n'
-
-		for CQ_state in self.trajectory:
-			trajectory_record += str(CQ_state) + '\n'
+		trajectory_record += '\n'.join(self.trajectory)
 
 		# Merge incipit and trajectory
 		text = incipit + trajectory_record
