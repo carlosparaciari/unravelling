@@ -119,7 +119,7 @@ class Unravelling:
 		prob_cont = self._probability_continuous()
 
 		random_outcome = rn.random()
-		#self.random_list.append(random_outcome)						# Save outcome to check if good randomness
+		self.random_list.append(random_outcome)						# Save outcome to check if good randomness
 
 		# If the outcome is less than the prob_cont, we evolve continuously
 		if random_outcome < prob_cont:
@@ -134,7 +134,7 @@ class Unravelling:
 		tot_prob_jumps = cumulative_prob_jumps[-1]
 
 		random_outcome = rn.uniform(0, tot_prob_jumps)
-		#self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
+		self.random_list.append(random_outcome/tot_prob_jumps)		# Save outcome to check if good randomness
 
 		alpha = next(x[0] for x in enumerate_prob_jumps if x[1] > random_outcome)
 
