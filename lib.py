@@ -20,7 +20,12 @@ class CQState:
 
 	def __str__(self):
 
-		string = str(self.state.tolist()) + ' , ' + str(self.position) + ' , ' + str(self.momentum) + ' , ' + str(self.time)
+		flat_list = np.array(self.state).reshape(-1,).tolist()
+		flat_list_str = map( str, flat_list)
+		state_str = ' , '.join( flat_list_str )
+
+		string = state_str + ' , ' + str(self.position) + ' , ' + str(self.momentum) + ' , ' + str(self.time)
+
 		return string
 
 """ The algorithm for the unravelled CQ dynamics.
@@ -182,7 +187,7 @@ class Unravelling:
 												   	   seed=self.random_seed)
 
 		# Prepare the trajectory file
-		trajectory_record = 'Trajectory record\nSTATE , POSITION , MOMENTUM , TIME\n'
+		trajectory_record = 'Trajectory record\nstate e1 , state e2 , position , momentum , time\n'
 		trajectory_record += '\n'.join(self.trajectory)
 
 		# Merge incipit and trajectory
