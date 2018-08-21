@@ -45,16 +45,26 @@ class CQState:
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, tau, delta_time, final_time, random_seed, filename):
+	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename):
 		
 		self.CQstate = CQstate
-		self.lindblad_ops = lindblad_ops
-		self.pos_derivs = pos_derivs			# NOTE : These might be functions in p and q! To be improved!
-		self.mom_derivs = mom_derivs
+		
+		# Quantum part of evolution
 		self.Qhamiltonian = Qhamiltonian		# This is a function (in q and p)
+		self.lindblad_ops = lindblad_ops
+		self.pos_derivs = pos_derivs			# NOTE : These might be functions in p and q! To be implemented!
+		self.mom_derivs = mom_derivs
+
+		# Classical part of evolution
+		self.clas_pos_derivs = clas_pos_derivs
+		self.clas_mom_derivs = clas_mom_derivs
+		
+		# Time scales
 		self.tau = tau
 		self.delta_time = delta_time
 		self.final_time = final_time
+
+		# Additional variables
 		self.filename = filename
 		self.random_seed = random_seed			# Pass this as information but nothing else (do the seeding before creating instance of Unravelling)
 
@@ -95,11 +105,16 @@ class Unravelling:
 	def _evolution_one_step(self, evo_type, norm):
 
 		if evo_type == -1:										# Continuous evolution
-			Qham_matrix = self.Qhamiltonian( self.CQstate.position , self.CQstate.position )
+			Qham_matrix = self.Qhamiltonian( self.CQstate.position , self.CQstate.momentum )
+			dHcdp = self.clas_mom_derivs( self.CQstate.position , self.CQstate.momentum )
+			dHcdq = self.clas_pos_derivs( self.CQstate.position , self.CQstate.momentum )
 
 			difference_state = self.delta_time * ( 1./(2 * self.tau) * self.sum_lindblad_ops + 1j * Qham_matrix ) * self.CQstate.state
 			unnorm_state = self.CQstate.state - difference_state
 			self.CQstate.state = unnorm_state/sqrt(norm)		# Here we are introducing an error prop to delta_time (due to normalisation)
+
+			self.CQstate.position += dHcdp * self.delta_time
+			self.CQstate.momentum -= dHcdq * self.delta_time			
 		else:													# Jump evolution
 			L = self.lindblad_ops[evo_type]
 			dhdp = self.mom_derivs[evo_type]

@@ -62,7 +62,7 @@ def test_state_wrong():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test lindblad ops with different shape raise exception
 def test_different_shape():
@@ -75,7 +75,7 @@ def test_different_shape():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test non squared lindblad ops raise exception
 def test_non_squared_lindblad():
@@ -88,7 +88,7 @@ def test_non_squared_lindblad():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test inconsistent state/Lindblad raise exception
 def test_inconsistent_state_lindblad():
@@ -101,7 +101,7 @@ def test_inconsistent_state_lindblad():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
 	with assert_raises(RuntimeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test non squared Hamiltonian raises exception
 def test_non_squared_hamiltonian():
@@ -114,7 +114,7 @@ def test_non_squared_hamiltonian():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.,1.],[0.,-1.,0]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test inconsistent state/Hamiltonian raise exception
 def test_inconsistent_state_hamiltonian():
@@ -127,7 +127,7 @@ def test_inconsistent_state_hamiltonian():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.,0.],[0.,-1.,0.],[0.,0.,2.]])
 
 	with assert_raises(RuntimeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # Test non self-adjoint Hamiltonian returns exception
 def test_non_self_adjoint_hamiltonian():
@@ -140,7 +140,7 @@ def test_non_self_adjoint_hamiltonian():
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,1j],[-2*1j,-3.]])
 
 	with assert_raises(TypeError):
-		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+		lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 # ---------------------------------- LINDBLAD OPERATORS ----------------------------------
 
@@ -154,7 +154,7 @@ def test_sum_lindblad():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_lindblad = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0)
+	test_lindblad = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, 0, 0, 0, 0, 0)
 
 	obt1 = test_lindblad.double_lindblad_ops[0]
 	obt2 = test_lindblad.double_lindblad_ops[1]
@@ -180,7 +180,7 @@ def test_probability_continuous():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_prob = lib.Unravelling(CQstate, [L], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_prob = lib.Unravelling(CQstate, [L], 0, 0, QHamlitonian, 0, 0, tau, delta_time, 0, 0, 0)
 
 	obt_prob = test_prob._probability_continuous()
 	exp_prob = 1./3.
@@ -198,7 +198,7 @@ def test_probability_jump():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_prob = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_prob = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, tau, delta_time, 0, 0, 0)
 
 	obt_prob1 = test_prob._probability_jump(0)
 	exp_prob1 = 2./3.
@@ -223,7 +223,7 @@ def test_choose_evo_continuous():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, seed, 0)
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, tau, delta_time, 0, seed, 0)
 	obt_type, obt_norm = test_evo._choose_evolution()
 	obt_randomness = test_evo.random_list[0]
 
@@ -248,7 +248,7 @@ def test_choose_evo_jump_0():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, seed, 0)
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, tau, delta_time, 0, seed, 0)
 	obt_type, obt_norm = test_evo._choose_evolution()
 	obt_randomness_first = test_evo.random_list[0]
 	obt_randomness_second = test_evo.random_list[1]
@@ -276,7 +276,7 @@ def test_choose_evo_jump_1():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, seed, 0)
+	test_evo = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, 0, 0, tau, delta_time, 0, seed, 0)
 	obt_type, obt_norm = test_evo._choose_evolution()
 	obt_randomness_first = test_evo.random_list[0]
 	obt_randomness_second = test_evo.random_list[1]
@@ -298,12 +298,14 @@ def test_cont_evo_diagonal_Hamiltonian_only():
 	
 	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,0)
 	L0 = np.matrix([[0.,0.],[0.,0.]])		# set L0 to be zero everywhere so we can check contribution of H only
+	clas_pos_derivs = lambda q,p : q
+	clas_mom_derivs = lambda q,p : p
 	delta_time = 2.
 	tau = 8.
 
 	QHamlitonian = lambda q,p : q * np.matrix([[1.,0.],[0.,-1.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(-1, 1.)
 
 	obt_state = test_cont.CQstate.state
@@ -314,7 +316,7 @@ def test_cont_evo_diagonal_Hamiltonian_only():
 	exp_state = np.matrix([[sqrt(2)/sqrt(3) - 1j * 1./sqrt(6)]
 						  ,[-1./sqrt(12) + 1j*1./sqrt(3)]])
 	exp_position = 1./4.
-	exp_momentum = 0
+	exp_momentum = -1./2.
 	exp_time = 2.
 
 	np.testing.assert_almost_equal( obt_state, exp_state )
@@ -325,14 +327,16 @@ def test_cont_evo_diagonal_Hamiltonian_only():
 # Test continuous evolution with only non-diagonal Hamiltonian
 def test_cont_evo_non_diagonal_Hamiltonian_only():
 	
-	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./2.,0)
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./2.,1.)
 	L0 = np.matrix([[0.,0.],[0.,0.]])		# set L0 to be zero everywhere so we can check contribution of H only
+	clas_pos_derivs = lambda q,p : q
+	clas_mom_derivs = lambda q,p : p
 	delta_time = 2.
 	tau = 8.
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0], 0, 0, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(-1, 1.)
 
 	obt_state = test_cont.CQstate.state
@@ -342,8 +346,8 @@ def test_cont_evo_non_diagonal_Hamiltonian_only():
 
 	exp_state = np.matrix([[(1. + sqrt(2))/sqrt(3)]
 						  ,[1j * (1. - sqrt(2))/sqrt(3)]])
-	exp_position = 1./2.
-	exp_momentum = 0
+	exp_position = 5./2.
+	exp_momentum = 0.
 	exp_time = 2.
 
 	np.testing.assert_almost_equal( obt_state, exp_state )
@@ -357,12 +361,14 @@ def test_cont_evo_Lindblad_only():
 	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),0,0)
 	L0 = np.matrix([[0.,0.],[1.,0.]])
 	L1 = np.matrix([[0.,1.],[0.,0.]])
+	clas_pos_derivs = lambda q,p : q
+	clas_mom_derivs = lambda q,p : p
 	delta_time = 2.
 	tau = 8.
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(-1, 1.)
 
 	obt_state = test_cont.CQstate.state
@@ -371,8 +377,8 @@ def test_cont_evo_Lindblad_only():
 	obt_time = test_cont.CQstate.time
 
 	exp_state = 7./8. * np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]])
-	exp_position = 0
-	exp_momentum = 0
+	exp_position = 0.
+	exp_momentum = 0.
 	exp_time = 2.
 
 	np.testing.assert_almost_equal( obt_state, exp_state )
@@ -383,15 +389,17 @@ def test_cont_evo_Lindblad_only():
 # Test continuous evolution complete
 def test_cont_evo_complete():
 	
-	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,0)
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,-1./2.)
 	L0 = np.matrix([[0.,0.],[1.,0.]])
 	L1 = np.matrix([[0.,1.],[0.,0.]])
+	clas_pos_derivs = lambda q,p : q
+	clas_mom_derivs = lambda q,p : p
 	delta_time = 2.
 	tau = 4.
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0,L1], 0, 0, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(-1, 1.)
 
 	obt_state = test_cont.CQstate.state
@@ -401,8 +409,8 @@ def test_cont_evo_complete():
 
 	exp_state = np.matrix([[(sqrt(3)/sqrt(2) + 1./sqrt(3)) / 2.]
 						  ,[1j * (sqrt(3)/4. - 1/sqrt(6)) ]])
-	exp_position = 1./4.
-	exp_momentum = 0
+	exp_position = -3./4.
+	exp_momentum = -1.
 	exp_time = 2.
 
 	np.testing.assert_almost_equal( obt_state, exp_state )
@@ -426,7 +434,7 @@ def test_jump_evo_L0():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, 0, 0, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(0, 1.)
 
 	obt_state = test_cont.CQstate.state
@@ -458,7 +466,7 @@ def test_jump_evo_L1():
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
-	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, tau, delta_time, 0, 0, 0)
+	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, 0, 0, tau, delta_time, 0, 0, 0)
 	test_cont._evolution_one_step(1, 1.)
 
 	obt_state = test_cont.CQstate.state
