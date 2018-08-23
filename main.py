@@ -42,16 +42,16 @@ mom_derivs = [0., 0.]
 	- delta_time : time interval for single evolution
 	- final time : final time we are interested in
 """
-tau = 1e-1
+tau = 1e-2
 delta_time = 1e-4
-final_time = 1.
+final_time = 1e-1
 
 # Random seed
 seed = 365
 rn.seed(seed)
 
 # Number of iterations
-iterations = int(1e4)
+iterations = int(1e6)
 
 for iteration in range(iterations):
 # Filename for output

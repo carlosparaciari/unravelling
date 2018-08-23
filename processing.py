@@ -1,20 +1,31 @@
 import numpy as np
+from datetime import datetime
 
-# Number of trajectories created
-number_of_outputs = int(1e3)
+# Measure initial time
+tstart = datetime.now()
+
+# Modify this before processing the raw data
+
+number_of_outputs = int(1e5)	# Number of trajectories generated
+max_q_range = int(1e3)			# Number of possible steps in position
+q_interval = 1e-6				# Fundamental shift in position
+max_p_range = 1					# Number of possible steps in momentum
+p_interval = 1e-2				# Fundamental shift in momentum
+
+precision = 1e-7				# Precision for binning data in phase space grid (CAREFUL WITH THIS!)
 
 ## Defining functions that will be useful for processing trajectories
 
 # Map amplitude into population
 def ampltopop(x):
-	return np.conjugate(x)*x
+	return np.real(np.conjugate(x)*x)
 
 # Vectorise function ampltopop to be more efficient on long array
 vampltopop = np.vectorize(ampltopop, otypes='f')
 
-# Map amplitudes into coherence term
+# Map amplitudes into coherence term (we take the abs value to reduce the size of this thing)
 def ampltocoher(v):
-	return v[0]*np.conjugate(v[1])
+	return np.absolute(v[0]*np.conjugate(v[1]))
 
 # And function on two-value array (probably it exists already)
 def andarray(v):
@@ -33,7 +44,7 @@ for iterator in range(number_of_outputs):
 							 skiprows = 4,
 							 delimiter = ' , ',
 							 usecols = (0,1),
-							 dtype = np.complex
+							 dtype = np.complex128    # NOTE: I prefer np.complex64, but I get weird error if I use that!
 							 )
 
 	Qtrajectory_populations = vampltopop(Qtrajectory)
@@ -55,8 +66,6 @@ Qtrajectory_populations = None
 Qtrajectory_coherence = None
 Qtrajectory = None
 
-print('Quantum trajectories loaded\n')
-
 ## Load the classical trajectories (we only store q and p, time is not necessary)
 
 Ctrajectories = []
@@ -68,7 +77,7 @@ for iterator in range(number_of_outputs):
 							 skiprows = 4,
 							 delimiter = ' , ',
 							 usecols = (2,3),
-							 dtype = np.float
+							 dtype = np.float32
 							 )
 	Ctrajectories.append(Ctrajectory)
 
@@ -78,22 +87,24 @@ Ctrajectories_array = np.array(Ctrajectories)
 Ctrajectories = None
 Ctrajectory = None
 
-print('Classical trajectories loaded\n')
+# Measure intermediate time
+tinter = datetime.now()
 
 ## Get average trajectories in state-space
-
-# NOTE : For this particular example we know all the possible values
-q_values = [0.]
-p_values = [0.1, 0., -0.1]
 
 empty_array = np.zeros( Qpopground_array.shape, dtype=np.float )
 
 evolution = []
 
-for q in q_values:
-	for p in p_values:
-	    
-		statespace_point_both = Ctrajectories_array == [q,p]
+q_grid = range(-max_q_range, max_q_range)
+q_values = [q * q_interval for q in q_grid]
+p_grid = range(-max_p_range, max_p_range)
+p_values = [p * p_interval for p in p_grid]
+
+for p in p_values:
+	for q in q_values:
+
+		statespace_point_both = np.absolute( Ctrajectories_array - [q,p] ) < precision
 		statespace_point = np.apply_along_axis(andarray, 2, statespace_point_both)
 
 		Qpopground_fixed_statespace = np.where(statespace_point, Qpopground_array, empty_array)
@@ -104,36 +115,23 @@ for q in q_values:
 		Qpopexcited_fixed_statespace_average = np.sum(Qpopexcited_fixed_statespace,axis=0)/number_of_outputs
 		Qcoherence_fixed_statespace_average = np.sum(Qcoherence_fixed_statespace,axis=0)/number_of_outputs
 
-		evolution.append([Qpopground_fixed_statespace_average,
-						  Qpopexcited_fixed_statespace_average,
-						  Qcoherence_fixed_statespace_average,
-						  q,
-						  p]
-						  )
+		# NOTICE: Float format needs to be modified according to variables q_interval and p_interval
+		filename_output = './output_average/average_trajectory_pos_{0:.6f}_mom_{1:.2f}.dat'.format( q, p )
 
-# Clean up to free RAM
-Ctrajectories_array = None
-Qpopground_array = None
-Qpopexcited_array = None
-Qcoherence_array = None
+		np.savetxt(filename_output,
+                   np.c_[Qpopground_fixed_statespace_average,
+                         Qpopexcited_fixed_statespace_average,
+                         Qcoherence_fixed_statespace_average],
+                   fmt='%.12f',
+                   delimiter=' , ',
+                   header='population u0 , population u1 , coherence')
+        
+# Measure final time
+tfinal = datetime.now()
 
-print('Average trajectories computed\n')
+## Print time for loading and for averaging
+tloading = tinter - tstart
+taveraging = tfinal - tinter
 
-## Save average trajectories on file
-for Qpopu0, Qpopu1, Qcoher, q, p in evolution:
-	# Prpare the output filename
-	filename_output = './output/average_trajectory_pos_{0}_mom_{1}.dat'.format( str(q) , str(p))
-
-	# Prepare the incipit of the datafile
-	incipit = 'position , momentum\n'
-	incipit += str(q) + ' , ' + str(p) + '\n\n'
-
-	# Prepare the main body of the datafile
-	body = 'population u0 , population u1 , coherence\n'
-	for u0 , u1, coher in zip(Qpopu0, Qpopu1, Qcoher):
-		body += str(u0) + ' , ' + str(u1) + ' , ' + str(coher) + '\n'
-
-	text = incipit + body
-	with open(filename_output, 'w') as output:
-		output.write(text)
-
+print('Loading time was {}\n'.format(tloading))
+print('Averaging time was {}\n'.format(taveraging))
