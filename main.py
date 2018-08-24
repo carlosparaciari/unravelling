@@ -1,6 +1,7 @@
 import lib
 import numpy as np
 import random as rn
+from datetime import datetime
 from math import sqrt
 from copy import copy
 
@@ -51,13 +52,30 @@ seed = 365
 rn.seed(seed)
 
 # Number of iterations
-iterations = int(1e6)
+iterations = 1000
+
+# Save information about this unravelling
+fileinfo = './output/info_unravelling.txt'
+filename = ''
+stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, seed, filename, fileinfo)
+stern_gerlach.save_unravelling_info()
+del stern_gerlach
+
+# Measure time before simulation
+tstart = datetime.now()
 
 for iteration in range(iterations):
 # Filename for output
-	filename = './output/output{0}.dat'.format( str(iteration) )
+	filename = './output/output{0}'.format( str(iteration) )
 
 	# Create unravelling and evolve
 	stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, seed, filename)
 	stern_gerlach.evolution()
 	del stern_gerlach
+
+# Measure time after simulation
+tfinal = datetime.now()
+
+# Print time for loading and for averaging
+tsim = tfinal - tstart
+print('Simulation time is {}\n'.format(tsim))
