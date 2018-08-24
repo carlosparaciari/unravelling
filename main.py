@@ -43,23 +43,16 @@ mom_derivs = [0., 0.]
 	- delta_time : time interval for single evolution
 	- final time : final time we are interested in
 """
-tau = 1e-2
+tau = 1e-1
 delta_time = 1e-4
-final_time = 1e-1
+final_time = 1.
 
 # Random seed
 seed = 365
 rn.seed(seed)
 
 # Number of iterations
-iterations = 1000
-
-# Save information about this unravelling
-fileinfo = './output/info_unravelling.txt'
-filename = ''
-stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, seed, filename, fileinfo)
-stern_gerlach.save_unravelling_info()
-del stern_gerlach
+iterations = int(1e3)
 
 # Measure time before simulation
 tstart = datetime.now()
