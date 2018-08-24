@@ -1,10 +1,10 @@
 import numpy as np
-from datetime import datetime
 
 # Modify this before processing the raw data
 
-number_of_outputs = 100			# Number of trajectories generated
-precision = 1e-7				# Precision for binning data in phase space grid (CAREFUL WITH THIS!)
+number_of_batches = int(2e3)				# Number of batches of trajectories
+number_of_outputs_per_batch = 100			# Number of trajectories per batches
+precision = 1e-7							# Precision for binning data in phase space grid (CAREFUL WITH THIS!)
 
 # ------------------------------------------- USEFUL FUNCTIONS -------------------------------------------
 
@@ -19,165 +19,148 @@ vampltopop = np.vectorize(ampltopop, otypes='f')
 def ampltocoher(v):
 	return np.absolute(v[0]*np.conjugate(v[1]))
 
-# ------------------------------------------- LOADING THE DATA -------------------------------------------
+for batch in range(number_of_batches):
 
-Qpopground = []
-Qpopexcited = []
-Qcoherence = []
+	print('Batch number {}'.format(batch))
 
-# Measure time before loading
-t0 = datetime.now()
+	# ------------------------------------------- LOADING THE DATA -------------------------------------------
 
-for iterator in range(number_of_outputs):
+	Qpopground = []
+	Qpopexcited = []
+	Qcoherence = []
 
-	filename = './output/output{0}.dat'.format( str(iterator) )
-	Qtrajectory = np.loadtxt(filename,
-							 skiprows = 4,
-							 delimiter = ' , ',
-							 usecols = (0,1),
-							 dtype = np.complex128    # NOTE: I prefer np.complex64, but I get weird error if I use that!
-							 )
+	for iterator in range(number_of_outputs_per_batch):
 
-	Qtrajectory_populations = vampltopop(Qtrajectory)
-	Qtrajectory_coherence = np.apply_along_axis(ampltocoher, 1, Qtrajectory)
+		filenumber = batch * number_of_outputs_per_batch + iterator
+		filename = './output/output{0}.dat'.format( str(filenumber) )
+		Qtrajectory = np.loadtxt(filename,
+								 skiprows = 4,
+								 delimiter = ' , ',
+								 usecols = (0,1),
+								 dtype = np.complex128    # NOTE: I prefer np.complex64, but I get weird error if I use that!
+								 )
 
-	Qpopground.append(Qtrajectory_populations[:,0])
-	Qpopexcited.append(Qtrajectory_populations[:,1])
-	Qcoherence.append(Qtrajectory_coherence)
+		Qtrajectory_populations = vampltopop(Qtrajectory)
+		Qtrajectory_coherence = np.apply_along_axis(ampltocoher, 1, Qtrajectory)
 
-Qpopground_array = np.transpose(Qpopground)
-Qpopexcited_array = np.transpose(Qpopexcited)
-Qcoherence_array = np.transpose(Qcoherence)
+		Qpopground.append(Qtrajectory_populations[:,0])
+		Qpopexcited.append(Qtrajectory_populations[:,1])
+		Qcoherence.append(Qtrajectory_coherence)
 
-# Clean up to free RAM
-Qpopground = None
-Qpopexcited = None
-Qcoherence = None
-Qtrajectory_populations = None
-Qtrajectory_coherence = None
-Qtrajectory = None
+	Qpopground_array = np.transpose(Qpopground)
+	Qpopexcited_array = np.transpose(Qpopexcited)
+	Qcoherence_array = np.transpose(Qcoherence)
 
-## Load the classical trajectories (we only store q and p, time is not necessary)
+	# Clean up to free RAM
+	Qpopground = None
+	Qpopexcited = None
+	Qcoherence = None
+	Qtrajectory_populations = None
+	Qtrajectory_coherence = None
+	Qtrajectory = None
 
-Ctrajectories = []
+	## Load the classical trajectories (we only store q and p, time is not necessary)
 
-for iterator in range(number_of_outputs):
+	Ctrajectories = []
 
-	filename = './output/output{0}.dat'.format( str(iterator) )
-	Ctrajectory = np.loadtxt(filename,
-							 skiprows = 4,
-							 delimiter = ' , ',
-							 usecols = (2,3),
-							 dtype = np.float32
-							 )
-	Ctrajectories.append(Ctrajectory)
+	for iterator in range(number_of_outputs_per_batch):
 
-Ctrajectories_array = np.transpose(Ctrajectories,axes=[1,0,2])
+		filenumber = batch * number_of_outputs_per_batch + iterator
+		filename = './output/output{0}.dat'.format( str(filenumber) )
+		Ctrajectory = np.loadtxt(filename,
+								 skiprows = 4,
+								 delimiter = ' , ',
+								 usecols = (2,3),
+								 dtype = np.float32
+								 )
+		Ctrajectories.append(Ctrajectory)
 
-# Clean up to free RAM
-Ctrajectories = None
-Ctrajectory = None
+	Ctrajectories_array = np.transpose(Ctrajectories,axes=[1,0,2])
 
-# Measure time after loading
-t1 = datetime.now()
+	# Clean up to free RAM
+	Ctrajectories = None
+	Ctrajectory = None
 
-# Print loading time
-tloading = t1 - t0
-print('Loading time was {}\n'.format(tloading))
+	# ------------------------------------------- BROADCASTING AND AVERAGING -------------------------------------------
 
-# ------------------------------------------- BROADCASTING AND AVERAGING -------------------------------------------
+	# Counts the number of timesteps and the number of trajectories we use
+	Ntimesteps , Ntrajectories , _ = Ctrajectories_array.shape
 
-# Measure time before broadcasting and averaging
-t0 = datetime.now()
+	## Create phase space points of interest
+	q_values = np.unique(Ctrajectories_array[:,:,0])
+	q_value_num = len(q_values)
+	p_values = np.unique(Ctrajectories_array[:,:,1])
+	p_value_num = len(p_values)
 
-# Counts the number of timesteps and the number of trajectories we use
-Ntimesteps , Ntrajectories , _ = Ctrajectories_array.shape
+	# This vector contains all points we need to check on the phasespace
+	phasespace = np.stack((np.tile(q_values, p_value_num), np.repeat(p_values, q_value_num)), axis=-1)
 
-## Create phase space points of interest
-q_values = np.unique(Ctrajectories_array[:,:,0])
-q_value_num = len(q_values)
-p_values = np.unique(Ctrajectories_array[:,:,1])
-p_value_num = len(p_values)
+	# Clean up to free RAM
+	q_values = None
+	p_values = None
 
-# This vector contains all points we need to check on the phasespace
-phasespace = np.stack((np.tile(q_values, p_value_num), np.repeat(p_values, q_value_num)), axis=-1)
+	# Total number of different phase space points
+	Npspoints , _ = phasespace.shape
 
-# Clean up to free RAM
-q_values = None
-p_values = None
+	# Broadcast both phasespace and classical trajectories to check equality only once
+	broad_phasespace = np.transpose(np.broadcast_to(phasespace,(Ntimesteps,Ntrajectories,Npspoints, 2)),(2,0,1,3))
+	broad_Ctrajectories = np.broadcast_to(Ctrajectories_array,(Npspoints, Ntimesteps, Ntrajectories, 2))
 
-# Total number of different phase space points
-Npspoints , _ = phasespace.shape
+	# Find points that are the same
+	broad_phasespace_bool_both = np.absolute( broad_Ctrajectories - broad_phasespace ) < precision
+	broad_phasespace_bool = np.all(broad_phasespace_bool_both,axis=3)
 
-# Broadcast both phasespace and classical trajectories to check equality only once
-broad_phasespace = np.transpose(np.broadcast_to(phasespace,(Ntimesteps,Ntrajectories,Npspoints, 2)),(2,0,1,3))
-broad_Ctrajectories = np.broadcast_to(Ctrajectories_array,(Npspoints, Ntimesteps, Ntrajectories, 2))
+	# Clean up to free RAM
+	broad_Ctrajectories = None
+	broad_phasespace = None
+	broad_phasespace_bool_both = None
 
-# Find points that are the same
-broad_phasespace_bool_both = np.absolute( broad_Ctrajectories - broad_phasespace ) < precision
-broad_phasespace_bool = np.all(broad_phasespace_bool_both,axis=3)
+	# Broadcast both populations and coherence
+	broad_Qpopground = np.broadcast_to(Qpopground_array,(Npspoints, Ntimesteps, Ntrajectories))
+	broad_Qpopexcited = np.broadcast_to(Qpopexcited_array,(Npspoints, Ntimesteps, Ntrajectories))
+	broad_Qcoherence = np.broadcast_to(Qcoherence_array,(Npspoints, Ntimesteps, Ntrajectories))
 
-# Clean up to free RAM
-broad_Ctrajectories = None
-broad_phasespace = None
-broad_phasespace_bool_both = None
+	# Create zero vector that will be used later
+	empty_array = np.zeros( broad_Qpopground.shape, dtype=np.float32 )
 
-# Broadcast both populations and coherence
-broad_Qpopground = np.broadcast_to(Qpopground_array,(Npspoints, Ntimesteps, Ntrajectories))
-broad_Qpopexcited = np.broadcast_to(Qpopexcited_array,(Npspoints, Ntimesteps, Ntrajectories))
-broad_Qcoherence = np.broadcast_to(Qcoherence_array,(Npspoints, Ntimesteps, Ntrajectories))
+	# Single out the points with same position and momentum
+	Qpopground_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qpopground, empty_array)
+	Qpopexcited_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qpopexcited, empty_array)
+	Qcoherence_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qcoherence, empty_array)
 
-# Create zero vector that will be used later
-empty_array = np.zeros( broad_Qpopground.shape, dtype=np.float32 )
+	# Clean up to free RAM
+	broad_Qpopground = None
+	broad_Qpopexcited = None
+	broad_Qcoherence = None
+	empty_array = None
 
-# Single out the points with same position and momentum
-Qpopground_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qpopground, empty_array)
-Qpopexcited_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qpopexcited, empty_array)
-Qcoherence_fixed_phasespace = np.where(broad_phasespace_bool, broad_Qcoherence, empty_array)
+	# Now we average along the trajectories
+	Qpopground_fixed_phasespace_average = np.sum(Qpopground_fixed_phasespace,axis=2)/number_of_outputs_per_batch
+	Qpopexcited_fixed_phasespace_average = np.sum(Qpopexcited_fixed_phasespace,axis=2)/number_of_outputs_per_batch
+	Qcoherence_fixed_phasespace_average = np.sum(Qcoherence_fixed_phasespace,axis=2)/number_of_outputs_per_batch
 
-# Clean up to free RAM
-broad_Qpopground = None
-broad_Qpopexcited = None
-broad_Qcoherence = None
+	# Clean up to free RAM
+	Qpopground_fixed_phasespace = None
+	Qpopexcited_fixed_phasespace = None
+	Qcoherence_fixed_phasespace = None
 
-# Now we average along the trajectories
-Qpopground_fixed_phasespace_average = np.sum(Qpopground_fixed_phasespace,axis=2)/number_of_outputs
-Qpopexcited_fixed_phasespace_average = np.sum(Qpopexcited_fixed_phasespace,axis=2)/number_of_outputs
-Qcoherence_fixed_phasespace_average = np.sum(Qcoherence_fixed_phasespace,axis=2)/number_of_outputs
+	# ------------------------------------------- SAVING THE AVERAGE -------------------------------------------
 
-# Clean up to free RAM
-Qpopground_fixed_phasespace = None
-Qpopexcited_fixed_phasespace = None
-Qcoherence_fixed_phasespace = None
+	for iterator in range(Npspoints):
 
-# Measure time after broadcasting and averaging
-t1 = datetime.now()
+		# NOTICE: Float format needs to be modified according to variables q_interval and p_interval
+		filename_output = './output_average/average_trajectory_batch_{0}_pos_{1:.6f}_mom_{2:.2f}.dat'.format( batch , *phasespace[iterator] )
 
-# Print broadcasting and averaging time
-tbroad = t1 - t0
-print('Broadcasting and averaging time was {}\n'.format(tbroad))
+		np.savetxt(filename_output,
+				   np.c_[Qpopground_fixed_phasespace_average[iterator],
+				   		 Qpopexcited_fixed_phasespace_average[iterator],
+				   		 Qcoherence_fixed_phasespace_average[iterator]],
+				   		 fmt='%.12f',
+				   		 delimiter=' , ',
+				   		 header='population u0 , population u1 , coherence')
 
-# ------------------------------------------- SAVING THE AVERAGE -------------------------------------------
-
-# Measure time before saving data
-t0 = datetime.now()
-
-for iterator in range(Npspoints):
-
-	# NOTICE: Float format needs to be modified according to variables q_interval and p_interval
-	filename_output = './output_average/average_trajectory_pos_{0:.6f}_mom_{1:.2f}.dat'.format( *phasespace[iterator] )
-
-	np.savetxt(filename_output,
-			   np.c_[Qpopground_fixed_phasespace_average[iterator],
-			   		 Qpopexcited_fixed_phasespace_average[iterator],
-			   		 Qcoherence_fixed_phasespace_average[iterator]],
-			   		 fmt='%.12f',
-			   		 delimiter=' , ',
-			   		 header='population u0 , population u1 , coherence')
-
-# Measure time after saving data
-t1 = datetime.now()
-
-# Print saving time
-tsave = t1 - t0
-print('Saving time was {}\n'.format(tsave))
+	# Clean up to free RAM
+	Qpopground_fixed_phasespace_average = None
+	Qpopexcited_fixed_phasespace_average = None
+	Qcoherence_fixed_phasespace_average = None
+	phasespace = None
