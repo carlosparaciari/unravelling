@@ -43,7 +43,7 @@ mom_derivs = [0., 0.]
 	- delta_time : time interval for single evolution
 	- final time : final time we are interested in
 """
-tau = 1e-2
+tau = 5e-2
 delta_time = 1e-4
 final_time = 1e-1
 
@@ -59,7 +59,7 @@ tstart = datetime.now()
 
 for iteration in range(iterations):
 # Filename for output
-	filename = './output/output{0}'.format( str(iteration) )
+	filename = './output/output{0}.dat'.format( str(iteration) )
 
 	# Create unravelling and evolve
 	stern_gerlach = lib.Unravelling(copy(CQstate), [L0,L1], pos_derivs, mom_derivs, QHamlitonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, seed, filename)
