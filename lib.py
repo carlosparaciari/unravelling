@@ -28,6 +28,11 @@ class CQState:
 
 		return string
 
+	def state_to_array(self):
+
+		return np.array([(self.state , self.position , self.momentum , self.time)],
+						dtype=[('Qstate', np.matrix), ('pos', np.float), ('mom', np.float),('time', np.float)])
+
 """ The algorithm for the unravelled CQ dynamics.
 
 	Variables
@@ -42,10 +47,11 @@ class CQState:
 	- final_time : final time of the evolution
 	- random_seed : the seed for the random number generator
 	- filename : the name of the file where we save the data
+	- fileinfo : the name of the file where we save the information about unravelling
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename):
+	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename, fileinfo = None):
 		
 		self.CQstate = CQstate
 		
@@ -66,13 +72,14 @@ class Unravelling:
 
 		# Additional variables
 		self.filename = filename
+		self.fileinfo = fileinfo
 		self.random_seed = random_seed			# Pass this as information but nothing else (do the seeding before creating instance of Unravelling)
 
 		# Initialise randomness
 		self.random_list = []
 
 		# Initialise trajectory record
-		self.trajectory = [ str( self.CQstate ) ]
+		self.trajectory = self.CQstate.state_to_array()
 
 		# Check consistency of passed operators/state
 		self._check_shapes()
@@ -95,6 +102,37 @@ class Unravelling:
 			self._evolution_one_step(evo_type, norm)
 
 		self._save_to_file()
+
+	def save_unravelling_info(self):
+
+		# Prepare the urav_info of the file
+		urav_info = 'Lindblad operators = '
+
+		for L in self.lindblad_ops:
+			urav_info += str(L.tolist()) + ' ; '
+
+		urav_info = urav_info[:-3] + '\n'
+
+		urav_info += 'dh/dq = ' + str(self.pos_derivs) + '\n'
+		urav_info += 'dh/dp = ' + str(self.mom_derivs) + '\n'
+
+		urav_info += 'dHc/dq = ' + str(self.clas_pos_derivs( 'q' , 'p' )) + '\n'
+		urav_info += 'dHc/dp = ' + str(self.clas_mom_derivs( 'q' , 'p' )) + '\n'
+		
+		urav_info += ('Jump rate = {tau}\n'
+					'Time unit = {del_time}\n'
+					'Final_time = {fin_time}\n'
+					'Random seed = {seed}\n\n').format(tau=self.tau,
+												   	   del_time=self.delta_time,
+												   	   fin_time=self.final_time,
+												   	   seed=self.random_seed)
+
+		# Prepare the trajectory file
+		urav_info += 'Trajectory are saved as numpy array with following elements:\nnp.matrix (Qstate) , np.float (position) , np.float (momentum) , np.float (time)\n'
+
+		with open(self.fileinfo, 'w') as fout:
+			fout.write(urav_info)
+
 
 	""" The method evolves the state by one time step delta_time
 		Take as input
@@ -126,7 +164,7 @@ class Unravelling:
 
 		self.CQstate.time += self.delta_time
 
-		self.trajectory.append( str( self.CQstate ) )				# Save new point in trajectory evolution
+		np.append( self.trajectory, self.CQstate.state_to_array(), axis=0 )	# Save new point in trajectory evolution
 
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
@@ -184,33 +222,7 @@ class Unravelling:
 	# The method saves the data in a file
 	def _save_to_file(self):
 
-		# Prepare the incipit of the file
-		incipit = 'Lindblad operators = '
-
-		for L in self.lindblad_ops:
-			incipit += str(L.tolist()) + ' ; '
-
-		incipit += 'dh/dq = ' + str(self.pos_derivs) + ' ; '
-		incipit += 'dh/dp = ' + str(self.mom_derivs) + ' ; '
-		
-		incipit += ('Jump rate = {tau} ; '
-					'Time unit = {del_time} ; '
-					'Final_time = {fin_time} ; '
-					'Random seed = {seed}\n\n').format(tau=self.tau,
-												   	   del_time=self.delta_time,
-												   	   fin_time=self.final_time,
-												   	   seed=self.random_seed)
-
-		# Prepare the trajectory file
-		trajectory_record = 'Trajectory record\nstate e1 , state e2 , position , momentum , time\n'
-		trajectory_record += '\n'.join(self.trajectory)
-
-		# Merge incipit and trajectory
-		text = incipit + trajectory_record
-
-		# Write on file
-		with open(self.filename, 'w') as output:
-			output.write(text)
+		np.save( self.filename , self.trajectory )
 
 	# The method checks for consistent state/operators
 	def _check_shapes(self):
