@@ -429,8 +429,8 @@ def test_jump_evo_L0():
 	delta_time = 2.
 	tau = 4.
 
-	pos_derivs = [- 1./3., 1./6.]
-	mom_derivs = [1./8., - 1./4.]
+	pos_derivs = [lambda q,p : - 1./3., lambda q,p : 1./6.]
+	mom_derivs = [lambda q,p : 1./8., lambda q,p : - 1./4.]
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
@@ -461,8 +461,8 @@ def test_jump_evo_L1():
 	delta_time = 2.
 	tau = 4.
 
-	pos_derivs = [- 1./3., 1./6.]
-	mom_derivs = [1./8., - 1./4.]
+	pos_derivs = [lambda q,p : - 1./3., lambda q,p : 1./6.]
+	mom_derivs = [lambda q,p : 1./8., lambda q,p : - 1./4.]
 
 	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
 
@@ -483,6 +483,34 @@ def test_jump_evo_L1():
 	np.testing.assert_almost_equal( obt_position, exp_position )
 	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
 	np.testing.assert_almost_equal( obt_time, exp_time )
+
+# -------------------------------- TEST JUMPING CLASSICAL -------------------------------
+
+# Test change in position as a function
+def test_jump_classical_degrees_of_freedom():
+
+	CQstate = lib.CQState(np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]]),1./4.,2./3.)
+	L0 = np.matrix([[1.,0.],[0.,0.]])
+	L1 = np.matrix([[0.,0.],[0.,1.]])
+	delta_time = 2.
+	tau = 4.
+
+	pos_derivs = [lambda q,p : - 1./3. * p, lambda q,p : 1./6. * p]
+	mom_derivs = [lambda q,p : 1./8. * q, lambda q,p : - 1./4. * q]
+
+	QHamlitonian = lambda q,p : q * np.matrix([[0.,1.],[1.,0.]])
+
+	test_cont = lib.Unravelling(CQstate, [L0,L1], pos_derivs, mom_derivs, QHamlitonian, 0, 0, tau, delta_time, 0, 0, 0)
+	test_cont._evolution_one_step(0, 1.)
+
+	obt_position = test_cont.CQstate.position
+	obt_momentum = test_cont.CQstate.momentum
+
+	exp_position = 3./8.
+	exp_momentum = 14./9.
+
+	np.testing.assert_almost_equal( obt_position, exp_position )
+	np.testing.assert_almost_equal( obt_momentum, exp_momentum )
 
 # ---------------------------------- SAME ELEMENT LIST ----------------------------------
 

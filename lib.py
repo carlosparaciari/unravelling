@@ -43,19 +43,19 @@ class CQState:
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, pos_derivs, mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename):
+	def __init__(self, CQstate, lindblad_ops, qu_pos_derivs, qu_mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename):
 		
 		self.CQstate = CQstate
 		
 		# Quantum part of evolution
 		self.Qhamiltonian = Qhamiltonian		# This is a function (in q and p)
 		self.lindblad_ops = lindblad_ops
-		self.pos_derivs = pos_derivs			# NOTE : These might be functions in p and q! To be implemented!
-		self.mom_derivs = mom_derivs
+		self.qu_pos_derivs = qu_pos_derivs			# These are functions (in q and p)
+		self.qu_mom_derivs = qu_mom_derivs			# These are functions (in q and p)
 
 		# Classical part of evolution
-		self.clas_pos_derivs = clas_pos_derivs
-		self.clas_mom_derivs = clas_mom_derivs
+		self.clas_pos_derivs = clas_pos_derivs		# This is a function (in q and p)
+		self.clas_mom_derivs = clas_mom_derivs		# This is a function (in q and p)
 		
 		# Time scales
 		self.tau = tau
@@ -114,12 +114,12 @@ class Unravelling:
 			self.CQstate.momentum -= dHcdq * self.delta_time			
 		else:													# Jump evolution
 			L = self.lindblad_ops[evo_type]
-			dhdp = self.mom_derivs[evo_type]
-			dhdq = self.pos_derivs[evo_type]
+			dhdp = self.qu_mom_derivs[evo_type]
+			dhdq = self.qu_pos_derivs[evo_type]
 
 			self.CQstate.state = ( L * self.CQstate.state)/sqrt(norm)
-			self.CQstate.position += dhdp * self.tau
-			self.CQstate.momentum -= dhdq * self.tau
+			self.CQstate.position += dhdp( self.CQstate.position , self.CQstate.momentum ) * self.tau
+			self.CQstate.momentum -= dhdq( self.CQstate.position , self.CQstate.momentum ) * self.tau
 
 		self.CQstate.time += self.delta_time
 
@@ -185,9 +185,6 @@ class Unravelling:
 
 		for L in self.lindblad_ops:
 			incipit += str(L.tolist()) + ' ; '
-
-		incipit += 'dh/dq = ' + str(self.pos_derivs) + ' ; '
-		incipit += 'dh/dp = ' + str(self.mom_derivs) + ' ; '
 		
 		incipit += ('Jump rate = {tau} ; '
 					'Time unit = {del_time} ; '

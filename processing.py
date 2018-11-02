@@ -2,7 +2,8 @@ import numpy as np
 
 # Modify this before processing the raw data
 
-number_of_batches = int(2e3)				# Number of batches of trajectories
+initial_batch = 0							# The initial batch we start with
+number_of_batches = int(1e3)				# Number of batches of trajectories
 number_of_outputs_per_batch = 100			# Number of trajectories per batches
 precision = 1e-7							# Precision for binning data in phase space grid (CAREFUL WITH THIS!)
 
@@ -19,7 +20,7 @@ vampltopop = np.vectorize(ampltopop, otypes='f')
 def ampltocoher(v):
 	return np.absolute(v[0]*np.conjugate(v[1]))
 
-for batch in range(number_of_batches):
+for batch in range(initial_batch, initial_batch + number_of_batches):
 
 	print('Batch number {}'.format(batch))
 
