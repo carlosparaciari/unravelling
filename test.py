@@ -313,8 +313,8 @@ def test_cont_evo_diagonal_Hamiltonian_only():
 	obt_momentum = test_cont.CQstate.momentum
 	obt_time = test_cont.CQstate.time
 
-	exp_state = np.matrix([[sqrt(2)/sqrt(3) - 1j * 1./sqrt(6)]
-						  ,[-1./sqrt(12) + 1j*1./sqrt(3)]])
+	exp_state = 2./sqrt(5) * np.matrix([[sqrt(2)/sqrt(3) - 1j * 1./sqrt(6)]
+										,[-1./sqrt(12) + 1j*1./sqrt(3)]])
 	exp_position = 1./4.
 	exp_momentum = -1./2.
 	exp_time = 2.
@@ -344,8 +344,8 @@ def test_cont_evo_non_diagonal_Hamiltonian_only():
 	obt_momentum = test_cont.CQstate.momentum
 	obt_time = test_cont.CQstate.time
 
-	exp_state = np.matrix([[(1. + sqrt(2))/sqrt(3)]
-						  ,[1j * (1. - sqrt(2))/sqrt(3)]])
+	exp_state = 1./sqrt(2.) * np.matrix([[(1. + sqrt(2))/sqrt(3)]
+										 ,[1j * (1. - sqrt(2))/sqrt(3)]])
 	exp_position = 5./2.
 	exp_momentum = 0.
 	exp_time = 2.
@@ -376,7 +376,7 @@ def test_cont_evo_Lindblad_only():
 	obt_momentum = test_cont.CQstate.momentum
 	obt_time = test_cont.CQstate.time
 
-	exp_state = 7./8. * np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]])
+	exp_state = np.matrix([[sqrt(2)/sqrt(3)],[1j*1./sqrt(3)]])
 	exp_position = 0.
 	exp_momentum = 0.
 	exp_time = 2.
@@ -407,8 +407,10 @@ def test_cont_evo_complete():
 	obt_momentum = test_cont.CQstate.momentum
 	obt_time = test_cont.CQstate.time
 
-	exp_state = np.matrix([[(sqrt(3)/sqrt(2) + 1./sqrt(3)) / 2.]
-						  ,[1j * (sqrt(3)/4. - 1/sqrt(6)) ]])
+	unnorm_exp_state = np.matrix([[(sqrt(3)/sqrt(2) + 1./sqrt(3)) / 2.]
+								  ,[1j * (sqrt(3)/4. - 1/sqrt(6)) ]])
+	exp_state = unnorm_exp_state/np.linalg.norm(unnorm_exp_state)
+
 	exp_position = -3./4.
 	exp_momentum = -1.
 	exp_time = 2.

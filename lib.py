@@ -32,9 +32,11 @@ class CQState:
 	Variables
 	- CQstate : the quantum-classical state
 	- lindblad_ops : the list of Lindblad operators L_{\alpha}
-	- pos_derivs : the list of dh^{\alpha}/dq
-	- mom_derivs : the list of dh^{\alpha}/dp
-	- Qhamiltonian : the coupling Hamiltonian (this is a function in q and p)
+	- qu_pos_derivs : the list of first derivatives in position of h^{\alpha}
+	- qu_mom_derivs : the list of first derivatives in momentum of h^{\alpha}
+	- Qhamiltonian : the coupling Hamiltonian H_I = \sum_{\alpha} h^{\alpha} L_{\alpha}^{\dagger} L_{\alpha}
+	- clas_pos_deriv : the list of first derivatives in position of H_C classical Hamiltonian
+	- clas_mom_deriv : the list of first derivatives in momentum of H_C classical Hamiltonian
 	- tau : the rate of jumping
 	- delta_time : the unit time of evolution
 	- final_time : final time of the evolution
@@ -43,19 +45,19 @@ class CQState:
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, qu_pos_derivs, qu_mom_derivs, Qhamiltonian, clas_pos_derivs, clas_mom_derivs, tau, delta_time, final_time, random_seed, filename):
+	def __init__(self, CQstate, lindblad_ops, qu_pos_derivs, qu_mom_derivs, Qhamiltonian, clas_pos_deriv, clas_mom_deriv, tau, delta_time, final_time, random_seed, filename):
 		
 		self.CQstate = CQstate
 		
 		# Quantum part of evolution
-		self.Qhamiltonian = Qhamiltonian		# This is a function (in q and p)
+		self.Qhamiltonian = Qhamiltonian			# This is a function (in q and p)
 		self.lindblad_ops = lindblad_ops
 		self.qu_pos_derivs = qu_pos_derivs			# These are functions (in q and p)
 		self.qu_mom_derivs = qu_mom_derivs			# These are functions (in q and p)
 
 		# Classical part of evolution
-		self.clas_pos_derivs = clas_pos_derivs		# This is a function (in q and p)
-		self.clas_mom_derivs = clas_mom_derivs		# This is a function (in q and p)
+		self.clas_pos_deriv = clas_pos_deriv		# This is a function (in q and p)
+		self.clas_mom_deriv = clas_mom_deriv		# This is a function (in q and p)
 		
 		# Time scales
 		self.tau = tau
@@ -64,7 +66,7 @@ class Unravelling:
 
 		# Additional variables
 		self.filename = filename
-		self.random_seed = random_seed			# Pass this as information but nothing else (do the seeding before creating instance of Unravelling)
+		self.random_seed = random_seed				# Pass this as information but nothing else (do the seeding before creating instance of Unravelling)
 
 		# Initialise randomness
 		self.random_list = []
@@ -103,12 +105,12 @@ class Unravelling:
 
 		if evo_type == -1:										# Continuous evolution
 			Qham_matrix = self.Qhamiltonian( self.CQstate.position , self.CQstate.momentum )
-			dHcdp = self.clas_mom_derivs( self.CQstate.position , self.CQstate.momentum )
-			dHcdq = self.clas_pos_derivs( self.CQstate.position , self.CQstate.momentum )
+			dHcdp = self.clas_mom_deriv( self.CQstate.position , self.CQstate.momentum )
+			dHcdq = self.clas_pos_deriv( self.CQstate.position , self.CQstate.momentum )
 
 			difference_state = self.delta_time * ( 1./(2 * self.tau) * self.sum_lindblad_ops + 1j * Qham_matrix ) * self.CQstate.state
 			unnorm_state = self.CQstate.state - difference_state
-			self.CQstate.state = unnorm_state/sqrt(norm)		# Here we are introducing an error prop to delta_time (due to normalisation)
+			self.CQstate.state = unnorm_state/np.linalg.norm(unnorm_state)	
 
 			self.CQstate.position += dHcdp * self.delta_time
 			self.CQstate.momentum -= dHcdq * self.delta_time			
@@ -123,7 +125,7 @@ class Unravelling:
 
 		self.CQstate.time += self.delta_time
 
-		self.trajectory.append( str( self.CQstate ) )				# Save new point in trajectory evolution
+		self.trajectory.append( str( self.CQstate ) )			# Save new point in trajectory evolution
 
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
@@ -135,7 +137,7 @@ class Unravelling:
 		prob_cont = self._probability_continuous()
 
 		random_outcome = rn.random()
-		self.random_list.append(random_outcome)						# Save outcome to check if good randomness
+		self.random_list.append(random_outcome)					# Save outcome to check if good randomness
 
 		# If the outcome is less than the prob_cont, we evolve continuously
 		if random_outcome < prob_cont:
