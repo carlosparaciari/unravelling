@@ -45,7 +45,19 @@ class CQState:
 """
 class Unravelling:
 
-	def __init__(self, CQstate, lindblad_ops, qu_pos_derivs, qu_mom_derivs, Qhamiltonian, clas_pos_deriv, clas_mom_deriv, tau, delta_time, final_time, random_seed, filename):
+	def __init__(self, CQstate,
+				 lindblad_ops,
+				 qu_pos_derivs,
+				 qu_mom_derivs,
+				 Qhamiltonian,
+				 clas_pos_deriv,
+				 clas_mom_deriv,
+				 tau,
+				 delta_time,
+				 final_time,
+				 random_seed,
+				 filename,
+				 skip_timesteps=1):
 		
 		self.CQstate = CQstate
 		
@@ -63,6 +75,10 @@ class Unravelling:
 		self.tau = tau
 		self.delta_time = delta_time
 		self.final_time = final_time
+
+		# Timesteps 
+		self.timestep_counter = 0
+		self.skip_timesteps = skip_timesteps
 
 		# Additional variables
 		self.filename = filename
@@ -123,9 +139,11 @@ class Unravelling:
 			self.CQstate.position += dhdp( self.CQstate.position , self.CQstate.momentum ) * self.tau
 			self.CQstate.momentum -= dhdq( self.CQstate.position , self.CQstate.momentum ) * self.tau
 
+		self.timestep_counter += 1
 		self.CQstate.time += self.delta_time
 
-		self.trajectory.append( str( self.CQstate ) )			# Save new point in trajectory evolution
+		if self.timestep_counter % self.skip_timesteps == 0:
+			self.trajectory.append( str( self.CQstate ) )			# Save new point in trajectory evolution
 
 	""" The method chooses the evolution (continuous or jump? which jump?)
 		It returns the evolution and the normalisation
@@ -197,7 +215,7 @@ class Unravelling:
 												   	   seed=self.random_seed)
 
 		# Prepare the trajectory file
-		trajectory_record = 'Trajectory record\nstate e1 , state e2 , position , momentum , time\n'
+		trajectory_record = 'Trajectory record\nstate e_1 , ... , state e_n , position , momentum , time\n'
 		trajectory_record += '\n'.join(self.trajectory)
 
 		# Merge incipit and trajectory
