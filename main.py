@@ -1,6 +1,7 @@
 import lib
 import numpy as np
 import random as rn
+from pathlib import Path
 from datetime import datetime
 from math import sqrt
 from copy import copy
@@ -94,6 +95,11 @@ clas_mom_derivs = lambda q,p : p
 tstart = datetime.now()
 
 for iteration in range(iterations):
+
+	# Check if directory exists, otherwise create it
+	output_directory = Path( './output/')
+	output_directory.mkdir(parents=True, exist_ok=True)
+
 	# Filename for output
 	filename = './output/trajectory_{0}.dat'.format( str(iteration) )
 
